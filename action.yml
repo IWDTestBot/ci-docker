@@ -1,0 +1,24 @@
+inputs:
+  image:
+    description: Dockerfile to build and run
+    required: true
+  action_path:
+    description: Path to calling action ($GITHUB_ACTION_PATH)
+    required: true
+  options:
+    description: Additional Docker options
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Docker
+      shell: bash
+      run: |
+        /usr/bin/docker build -t $GITHUB_RUN_ID -f ${{ inputs.action_path }}/${{ inputs.image }} \
+            ${{ inputs.action_path }}
+        /usr/bin/docker run ${{ inputs.options }} --workdir ${{ inputs.action_path }} --rm \
+            $(for var in $(compgen -e); do printf %s " -e $var"; done;) \
+            -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE \
+            -v /home/runner:/home/runner \
+            $GITHUB_RUN_ID
